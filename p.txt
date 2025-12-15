@@ -1,0 +1,8 @@
+so i want to make a pdf converter 
+first things first 
+pdfs are the msot irriatting things known to man kind
+some are txt formatrt and some are image format 
+so when some one gives me a odf first i need to find out whether i need to use ocr or i need to use pdf plumber 
+thought this is snot a good solutions because many pdfs fall under the intermediate 
+so i hae to apply both \
+the proble is to determine the stcutire 
