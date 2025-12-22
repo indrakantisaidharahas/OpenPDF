@@ -10,5 +10,5 @@ file=os.getenv("imgfile")
 
 pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
 print(pytesseract.get_tesseract_version())
-#print(pytesseract.image_to_string(Image.open(file)))
-pdf = pytesseract.image_to_pdf_or_hocr(file, extension='pdf')
+print(pytesseract.image_to_string(Image.open(file)))
+#pdf = pytesseract.image_to_pdf_or_hocr(file, extension='pdf')

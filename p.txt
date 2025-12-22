@@ -5,4 +5,42 @@ some are txt formatrt and some are image format
 so when some one gives me a odf first i need to find out whether i need to use ocr or i need to use pdf plumber 
 thought this is snot a good solutions because many pdfs fall under the intermediate 
 so i hae to apply both \
-the proble is to determine the stcutire 
+the problem is to determine the stcutire 
+so i got the ocr now is to run it on a pdf 
+
+
+
+so ihaave now methods to do ocr and cinvert pdf to  image 
+but no use wiht that 
+because a pdf is a miture f images and text 
+
+how do i dela wiht such intermediace 
+should i isolate the images 
+
+
+yeah screw everyhtig 
+first i thought abt is tesseract good 
+so i wanted to test how goo it was so i made test .py file to test its accuracy 
+the metrics were 
+Average CER: 0.0025130318540632058
+Average WER: 0.0016666666666666666
+a good performance but we have fint limitations here 
+
+
+so next i am thinking to proced wiht making the network here 
+yeah so i was thinking if this were a commercila project would i need nginx 
+but since this is nt commericil i will first gowiht a simpel server 
+if i have abundance of time i will see th nginx 
+
+
+i was thinking of integrating pyhon prcoes wiht nodejs sever
+agin i have to think secuity also here
+lol gotta be careful react 19 was hacked 
+
+
+so firt i will deal wit compresing pdfs 
+
+yeah what hosudl i d for nowl
+
+
+
