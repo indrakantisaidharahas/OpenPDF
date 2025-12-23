@@ -1,4 +1,4 @@
-Trying to Test the Security Using OSWAP ZAP 
+Trying to Test the Security Using OWASP ZAP 
 
 and also i have tried to test thest the accuracy of tessereact ocr by genrating text images using pillow the metrics used for evaluation were avg CER and avg WER
 
