@@ -44,3 +44,67 @@ yeah what hosudl i d for nowl
 
 
 
+
+
+
+
+
+	Strength	Progress	Elapsed	Reqs	Alerts	Status
+Analyser			00:00.060	6		
+						
+Plugin						
+Path Traversal	Medium	100	00:00.242	15	0	Completed
+Remote File Inclusion	Medium	100	00:00.124	10	0	Completed
+Source Code Disclosure - /WEB-INF Folder	Medium	100	00:00.484	5	0	Completed
+Remote Code Execution - Shell Shock	Medium	100	00:00.483	2	0	Completed
+Heartbleed OpenSSL Vulnerability	Medium	100	00:00.003	0	0	Completed
+Source Code Disclosure - CVE-2012-1823	Medium	100	00:00.030	1	0	Completed
+Remote Code Execution - CVE-2012-1823	Medium	100	00:00.031	16	0	Completed
+External Redirect	Medium	100	00:00.106	9	0	Completed
+Server Side Include	Medium	100	00:00.068	4	0	Completed
+Cross Site Scripting (Reflected)	Medium	100	00:00.136	15	0	Completed
+Cross Site Scripting (Persistent) - Prime	Medium	100	00:00.037	1	0	Completed
+Cross Site Scripting (Persistent) - Spider	Medium	100	00:00.048	8	0	Completed
+Cross Site Scripting (Persistent)	Medium	100	00:00.033	0	0	Completed
+SQL Injection	Medium	100	00:00.282	22	0	Completed
+SQL Injection - MySQL (Time Based)	Medium	100	00:00.132	10	0	Completed
+SQL Injection - Hypersonic SQL (Time Based)	Medium	100	00:00.117	10	0	Completed
+SQL Injection - Oracle (Time Based)	Medium	100	00:00.059	5	0	Completed
+SQL Injection - PostgreSQL (Time Based)	Medium	100	00:00.064	5	0	Completed
+SQL Injection - SQLite (Time Based)	Medium	100	00:00.125	10	0	Completed
+Cross Site Scripting (DOM Based)	Medium	100	02:10.691	0	0	Skipped, failed to start or connect to the browser.
+SQL Injection - MsSQL (Time Based)	Medium	100	00:00.108	10	0	Completed
+Log4Shell	Medium	100	00:00.003	0	0	Skipped, no Active Scan OAST service is selected.
+Spring4Shell	Medium	100	00:00.079	17	0	Completed
+Remote Code Execution (React2Shell)	Medium	100	00:00.004	1	0	Completed
+Server Side Code Injection	Medium	100	00:00.084	8	0	Completed
+Remote OS Command Injection	Medium	100	00:00.168	19	0	Completed
+XPath Injection	Medium	100	00:00.042	3	0	Completed
+XML External Entity Attack	Medium	100	00:00.015	0	0	Completed
+Generic Padding Oracle	Medium	100	00:00.018	0	0	Completed
+Cloud Metadata Potentially Exposed	Medium	100	00:00.042	9	0	Completed
+Server Side Template Injection	Medium	100	00:00.163	14	0	Completed
+Server Side Template Injection (Blind)	Medium	100	00:00.157	12	0	Completed
+Remote OS Command Injection (Time Based)	Medium	100	00:00.195	16	0	Completed
+Directory Browsing	Medium	100	00:00.031	8	0	Completed
+HTTP Only Site	Medium	100	00:00.044	0	0	Completed
+Buffer Overflow	Medium	100	00:00.043	1	0	Completed
+Format String Error	Medium	100	00:00.038	3	0	Completed
+CRLF Injection	Medium	100	00:00.050	7	0	Completed
+Parameter Tampering	Medium	100	00:00.060	7	0	Completed
+ELMAH Information Leak	Medium	100	00:00.005	1	0	Completed
+Trace.axd Information Leak	Medium	100	00:00.019	3	0	Completed
+.htaccess Information Leak	Medium	100	00:00.026	3	0	Completed
+.env Information Leak	Medium	100	00:00.031	3	0	Completed
+Hidden File Finder	Medium	100	00:00.266	52	0	Completed
+Spring Actuator Information Leak	Medium	100	00:00.021	2	0	Completed
+Exponential Entity Expansion (Billion Laughs Attack)	Medium	100	00:00.242	0	0	Completed
+XSLT Injection	Medium	100	00:00.072	8	0	Completed
+HTTPS Content Available via HTTP	Medium	100	00:00.013	0	0	Completed
+GET for POST	Medium	100	00:00.010	0	0	Completed
+User Agent Fuzzer	Medium	100	00:00.234	96	0	Completed
+Script Active Scan Rules	Medium	100	00:00.002	0	0	Skipped, no scripts enabled.
+SOAP Action Spoofing	Medium	100	00:00.014	0	0	Completed
+SOAP XML Injection	Medium	100	00:00.012	0	0	Completed
+						
+Totals			02:14.858	543	0	

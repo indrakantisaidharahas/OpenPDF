@@ -64,6 +64,49 @@ py.on('close', code => {
 
 });
 
+
+
+
+app.post('/context', upload.single('file'), (req, res) => {
+  const start = Date.now();
+  console.log("Request received");
+
+  const tempPath = req.file.path;
+  const inputPath = tempPath + '.pdf';
+  const outputPath = inputPath + '_context.txt';
+
+  fs.renameSync(tempPath, inputPath);
+
+  const py = spawn('/home/saidharahas/buzzdoc/venv/bin/python', [
+    '/home/saidharahas/buzzdoc/pad.py',
+    inputPath,
+    outputPath
+  ]);
+
+  py.stderr.on('data', data => {
+    console.error(data.toString());
+  });
+
+  py.on('close', code => {
+    const end = Date.now();
+    console.log(`Total request time: ${(end - start) / 1000}s`);
+
+    if (code !== 0) {
+      return res.status(500).send('OCR failed');
+    }
+
+    res.download(outputPath, () => {
+      fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
+    });
+  });
+});
+
+
+
+
+
+
 secserv.listen(port, () => {
   console.log(`Server running on https://localhost:${port}`);
 });

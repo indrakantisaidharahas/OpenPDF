@@ -14,7 +14,7 @@ function App() {
 
     let res
     try {
-      res = await fetch('https://localhost:3000', {
+      res = await fetch('https://localhost:3000/context', {
         method: 'POST',
         body: data
       })
@@ -33,7 +33,7 @@ function App() {
 
     const a = document.createElement('a')
     a.href = url
-    a.download = 'compressed.pdf'
+    a.download = 'compressed.txt'
     a.click()
 
     URL.revokeObjectURL(url)
