@@ -15,5 +15,5 @@ for page in result:
         contxt+=line 
         contxt+='\n' 
 with open(out_path,"w") as file:
-      file.write(contxt)
+      file.write(contxt) 
 print("done")      
