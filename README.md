@@ -32,3 +32,8 @@ This project implements a full-fledged PDF to text conversion pipeline leveragin
 
 ---
 
+
+![screenshot](home.png)
+![screenshot](jobimage.png)
+![screenshot](upload.png)
+
