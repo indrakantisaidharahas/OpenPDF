@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-
+import './auth.css'
 export default function Login() {
   const [mail, setMail] = useState('');
   const [pass, setPass] = useState('');
@@ -24,7 +24,7 @@ export default function Login() {
   return (
     <div className="auth-container">
       <form className="auth-box" onSubmit={handleLogin}>
-        <h2>Login</h2>
+        <h2 className="auth-title">Login</h2>
 
         <input
           type="email"
@@ -32,6 +32,7 @@ export default function Login() {
           value={mail}
           onChange={e => setMail(e.target.value)}
           required
+          className="auth-input"
         />
 
         <input
@@ -40,12 +41,13 @@ export default function Login() {
           value={pass}
           onChange={e => setPass(e.target.value)}
           required
+          className="auth-input"
         />
 
-        <button type="submit">Login</button>
+        <button type="submit" className="auth-button">Login</button>
 
-        <p>
-          No account? <Link to="/signup">Sign up</Link>
+        <p className="auth-footer-text">
+          No account? <Link to="/signup" className="auth-link">Sign up</Link>
         </p>
       </form>
     </div>

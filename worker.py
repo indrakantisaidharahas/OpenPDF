@@ -1,45 +1,30 @@
 import redis
-import time
-from paddleocr import PaddleOCR
 import uuid
 import os
 import traceback
+from paddleocr import PaddleOCR
 
-# Connect to Redis server
-r = redis.Redis(host='localhost', port=6379)
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+ocr = PaddleOCR(lang='en')
 
-# Initialize PaddleOCR
-ocr = PaddleOCR(use_textline_orientation=True, lang='en')
+UPLOAD_DIR = "/home/saidharahas/buzzdoc/backend/uploads"
 
-def worker(in_path, out_path):
-    result = ocr.predict(in_path)
-
-    contxt = ""
-
+def worker(inp, outp):
+    result = ocr.predict(inp)
+    text = ""
     for page in result:
-        texts = page.get("rec_texts", [])
-        for line in texts:
-            contxt += line + "\n"
-
-    with open(out_path, "w") as file:
-        file.write(contxt)
-
+        for line in page.get("rec_texts", []):
+            text += line + "\n"
+    with open(outp, "w") as f:
+        f.write(text)
 
 while True:
     try:
-        # Blocking pop from 'job_queue' list
-        jobid = r.brpop('job_queue')[1].decode()
-
-        status = r.hget(f'job:{jobid}', 'status')
-        if status != b'pending':
-            continue
-
+        jobid = r.brpop('job_queue')[1]
         r.hset(f'job:{jobid}', 'status', 'processing')
-        print("processing one job")
-        inpath = r.hget(f'job:{jobid}', 'path').decode()
 
-        filename = f"{uuid.uuid4().hex}.txt"
-        outpath = os.path.join("/home/saidharahas/buzzdoc/backend/uploads", filename)
+        inpath = r.hget(f'job:{jobid}', 'path')
+        outpath = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex}.txt")
 
         worker(inpath, outpath)
 
@@ -48,13 +33,10 @@ while True:
             'output_path': outpath
         })
 
-    except Exception as e:
+        userid = r.hget(f'job:{jobid}', 'userid')
+        r.publish(f'job_done:{userid}', jobid)
+
+    except Exception:
         traceback.print_exc()
         if 'jobid' in locals():
             r.hset(f'job:{jobid}', 'status', 'failed')
-        else:
-            # If no jobid yet, just sleep and continue
-            time.sleep(1)
-
-    # Optional: small delay to prevent high CPU usage when idle
-    time.sleep(0.1)

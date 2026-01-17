@@ -9,25 +9,21 @@ import { randomBytes, createHash } from 'crypto';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcrypt';
 import path from 'path';
-import {MongoClient} from 'mongodb';
+import { MongoClient } from 'mongodb';
 
 const BASE_DIR = '/home/saidharahas/buzzdoc/backend';
 const UPLOAD_DIR = path.join(BASE_DIR, 'uploads');
 
-/*-------------Mongodb part---------*/
-const murl="mongodb://localhost:27017/"
-const dbclient= new MongoClient(murl)
+/*------------- MONGODB ----------------*/
+const murl = "mongodb://localhost:27017/";
+const dbclient = new MongoClient(murl);
 await dbclient.connect();
 console.log("Connected successfully to mongo db server");
 
-    
 const db = dbclient.db('openpdf');
-const tb=db.collection('user');
+const tb = db.collection('user');
 
-
-
-/* ---------------- BASIC APP SETUP ---------------- */
-
+/*------------- APP SETUP ----------------*/
 const app = express();
 const port = 3000;
 
@@ -38,173 +34,143 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
-/* ---------------- ID GENERATORS ---------------- */
+/*------------- ID GENERATORS ----------------*/
+const genjobid = () => randomBytes(16).toString('hex');
+const gensessid = () => randomBytes(32).toString('hex');
+const genuserid = () => randomBytes(16).toString('hex');
 
-function genjobid() {
-  return randomBytes(16).toString('hex');
-}
-
-function gensessid() {
-  return randomBytes(32).toString('hex');
-}
-
-function genuserid() {
-  return randomBytes(16).toString('hex');
-}
-
-/* ---------------- REDIS ---------------- */
-
+/*------------- REDIS ----------------*/
 const client = createClient({
   socket: { host: '127.0.0.1', port: 6379 }
 });
-
 client.on('error', err => console.error('Redis error:', err));
 await client.connect();
 console.log('Connected to Redis');
 
-/* ---------------- FILE HASH ---------------- */
+/*------------- WAIT MAP + SUBSCRIBER ----------------*/
+const waitMap = new Map();
 
+const sub = client.duplicate();
+await sub.connect();
+
+await sub.pSubscribe('job_done:*', async (message, channel) => {
+  const jobid = message;
+  if (waitMap.has(jobid)) {
+    const res = waitMap.get(jobid);
+    waitMap.delete(jobid);
+    res.json({ status: 'done', jobid });
+  }
+});
+
+/*------------- FILE HASH ----------------*/
 function filehash(fpath) {
   return new Promise((resolve, reject) => {
     const hash = createHash('sha256');
     const stream = fs.createReadStream(fpath);
-
-    stream.on('data', data => hash.update(data));
-    stream.on('error', err => reject(err));
+    stream.on('data', d => hash.update(d));
+    stream.on('error', reject);
     stream.on('end', () => resolve(hash.digest('hex')));
   });
 }
 
-/* ---------------- SESSION CHECK ---------------- */
-
-// returns userid or -1
+/*------------- SESSION CHECK ----------------*/
 async function check(sid) {
-  const valid = await client.get(`session:${sid}`);
-  if (!valid) return -1;
-  return valid;
+  const uid = await client.get(`session:${sid}`);
+  return uid ? uid : -1;
 }
 
-/* ---------------- JOB PUSH ---------------- */
-
+/*------------- JOB PUSH ----------------*/
 async function push(user, pdf) {
   const jobid = genjobid();
   const hash = await filehash(pdf);
+  const now = Date.now();
 
   const existing = await client.get(`filehash:${hash}`);
-  if (existing) {
-    return { jobid: existing, exist: true };
-  }
+  if (existing) return { jobid: existing, exist: true };
 
   await client.hSet(`job:${jobid}`, {
     userid: user,
     status: 'pending',
     path: pdf,
-    output_path: '',        
-    verify: hash
+    output_path: '',
+    verify: hash,
+    created_at: now
   });
-   console.log("job pushed")
-  await client.set(`filehash:${hash}`, jobid);
 
-  // Add this line to enqueue the job for worker
+  await client.set(`filehash:${hash}`, jobid);
+  await client.zAdd(`user_jobs:${user}`, { score: now, value: jobid });
   await client.lPush('job_queue', jobid);
 
   return { jobid, exist: false };
 }
 
-
-
-/* ---------------- GET JOB STATUS ---------------- */
-
-async function getstat(user, jobid) {
-  const owner = await client.hGet(`job:${jobid}`, 'userid');
-  if (owner !== user) return -1;
-
-  const stat = await client.hGet(`job:${jobid}`, 'status');
-  return stat;
-}
-
-/* ---------------- MULTER ---------------- */
-
+/*------------- MULTER ----------------*/
 const upload = multer({
   dest: UPLOAD_DIR,
   limits: { fileSize: 10000000 },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') cb(null, true);
-    else cb(new Error('file is not of pdf type'));
+    file.mimetype === 'application/pdf'
+      ? cb(null, true)
+      : cb(new Error('Not PDF'));
   }
 });
 
-/* ---------------- CONTEXT ROUTE ---------------- */
-
-
+/*------------- CONTEXT ----------------*/
 app.post('/context', upload.single('file'), async (req, res) => {
-  console.log("intiaising text file covnerion support")
-  const sid = req.cookies.sid;
-  const user = await check(sid);
+  const user = await check(req.cookies.sid);
+  if (user === -1) return res.json({ log: false });
 
-  if (user === -1) {
-    return res.json({ log: false, jobid: -1, exist: false });
-  }
+  const pdfPath = req.file.path + '.pdf';
+  fs.renameSync(req.file.path, pdfPath);
 
-  const tempPath = req.file.path;
-  const inputPath = tempPath + '.pdf';
-  fs.renameSync(tempPath, inputPath);
-
-  const result = await push(user, inputPath);
-
-  res.json({
-    log: true,
-    jobid: result.jobid,
-    exist: result.exist
-  });
+  const result = await push(user, pdfPath);
+  res.json({ log: true, jobid: result.jobid, exist: result.exist });
 });
 
-/* ---------------- STATUS ROUTE ---------------- */
+/*------------- WAIT (NO POLLING) ----------------*/
+app.get('/wait', async (req, res) => {
+  const user = await check(req.cookies.sid);
+  if (user === -1) return res.sendStatus(401);
 
+  const { jobid } = req.query;
+  const status = await client.hGet(`job:${jobid}`, 'status');
+
+  if (status === 'done') return res.json({ status: 'done', jobid });
+
+  waitMap.set(jobid, res);
+  setTimeout(() => {
+    if (waitMap.has(jobid)) {
+      waitMap.delete(jobid);
+      res.json({ status: 'timeout' });
+    }
+  }, 30000);
+});
+
+/*------------- STATUS ----------------*/
 app.get('/status', async (req, res) => {
-  console.log("checking job status")
-  const sid = req.cookies.sid;
-  const user = await check(sid);
-
+  const user = await check(req.cookies.sid);
   if (user === -1) return res.status(401).json({ status: -1 });
 
-  const jobid = req.query.jobid;
-  const stat = await getstat(user, jobid);
+  const stat = await client.hGet(`job:${req.query.jobid}`, 'status');
   res.json({ status: stat });
 });
 
-/* ---------------- SIGNIN ---------------- */
-
+/*------------- signin ----------------*/
 app.post('/signin', async (req, res) => {
-  console.log("sigin is happending")
   const { mail, pass, uname } = req.body;
-
-  const exists = await client.exists(`user:${mail}`);
-  if (exists) {
-    return res.json({ status: false });
-  }
+  if (await client.exists(`user:${mail}`)) return res.json({ status: false });
 
   const uid = genuserid();
   const sid = gensessid();
   const hash = await bcrypt.hash(pass, 12);
 
-  await client.hSet(`user:${mail}`, {
-    uid: uid,
-    pass: hash
-  });
-  await tb.insertOne({ userid: uid, username: uname });  // <-- fixed
-
+  await client.hSet(`user:${mail}`, { uid, pass: hash });
+  await tb.insertOne({ userid: uid, username: uname });
   await client.set(`session:${sid}`, uid, { EX: 3600 });
 
-  res.cookie('sid', sid, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict'
-  });
-
+  res.cookie('sid', sid, { httpOnly: true, secure: true, sameSite: 'strict' });
   res.json({ status: true });
 });
-
 /*------------immediate verifcation----------*/
 app.get('/imdver', async (req, res) => {
   console.log("imdver is happening ")
@@ -217,63 +183,48 @@ app.get('/imdver', async (req, res) => {
     uname: userDoc?.username || null
   });
 });
-
-
-
-
-
-
-
-
-/* ---------------- LOGIN ---------------- */
-
+/*------------- login----------------*/
 app.post('/login', async (req, res) => {
-  const { mail, pass } = req.body;
-   console.log("login request ")
-  const user = await client.hGetAll(`user:${mail}`);
+  const user = await client.hGetAll(`user:${req.body.mail}`);
   if (!user.uid) return res.json({ status: false });
 
-  const ok = await bcrypt.compare(pass, user.pass);
-  if (!ok) return res.json({ status: false });
+  if (!(await bcrypt.compare(req.body.pass, user.pass)))
+    return res.json({ status: false });
 
   const sid = gensessid();
   await client.set(`session:${sid}`, user.uid, { EX: 3600 });
 
-  res.cookie('sid', sid, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict'
-  });
-
+  res.cookie('sid', sid, { httpOnly: true, secure: true, sameSite: 'strict' });
   res.json({ status: true });
 });
 
+/*------------- JOBS ----------------*/
+app.get('/jobs', async (req, res) => {
+  const user = await check(req.cookies.sid);
+  if (user === -1) return res.sendStatus(401);
 
-/*------download--------*/
-app.get('/download', async (req, res) => {
-  const jobid = req.query.jobid;
-  const output_path = await client.hGet(`job:${jobid}`, 'output_path');
-
-  if (!output_path || output_path === '') {
-    return res.status(404).send('File not ready');
-  }
-
-  res.download(output_path, `result_${jobid}.txt`);
+  const jobIds = await client.zRange(`user_jobs:${user}`, 0, 9);
+  const jobs = await Promise.all(jobIds.map(id => client.hGetAll(`job:${id}`)));
+  res.json({ jobids: jobIds, info: jobs });
 });
 
+/*------------- DOWNLOAD ----------------*/
+app.get('/download', async (req, res) => {
+  const user = await check(req.cookies.sid);
+  if (user === -1) return res.sendStatus(401);
 
+  const pathOut = await client.hGet(`job:${req.query.jobid}`, 'output_path');
+  if (!pathOut) return res.sendStatus(404);
 
+  res.download(pathOut);
+});
 
-
-/* ---------------- HTTPS SERVER ---------------- */
-
+/*------------- HTTPS ----------------*/
 const cred = {
   key: fs.readFileSync('/home/saidharahas/buzzdoc/key.pem'),
   cert: fs.readFileSync('/home/saidharahas/buzzdoc/cert.pem')
 };
 
-const secserv = https.createServer(cred, app);
-
-secserv.listen(port, () => {
-  console.log(`Server running on https://localhost:${port}`);
-});
+https.createServer(cred, app).listen(port, () =>
+  console.log(`Server running https://localhost:${port}`)
+);

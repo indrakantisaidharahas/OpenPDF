@@ -1,0 +1,33 @@
+.home-actions {
+  display: flex;
+  gap: 14px;
+  margin: 20px 0 30px;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.primary-btn:hover {
+  background: #1d4ed8;
+}
+
+.secondary-btn {
+  background: #0b1220;
+  color: white;
+  border: 1px solid #334155;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: #111827;
+}

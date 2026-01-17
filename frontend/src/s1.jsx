@@ -1,95 +1,101 @@
-import { useState, useEffect } from 'react';
+import { useState } from "react";
+import "./pdf.css";
 
 function Pdf() {
-  const [Gfile, setGfile] = useState(null);
   const [jobid, setJobid] = useState(null);
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState("idle");
   const [downloadUrl, setDownloadUrl] = useState(null);
 
   async function handler(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    setGfile(file);
+    setStatus("uploading");
 
     const data = new FormData();
-    data.append('file', file);
+    data.append("file", file);
 
     try {
-      const res = await fetch('https://localhost:3000/context', {
-        method: 'POST',
-        credentials: 'include',  // <-- important to send cookies!
+      const res = await fetch("https://localhost:3000/context", {
+        method: "POST",
+        credentials: "include",
         body: data,
       });
 
-      if (!res.ok) {
-        console.log('Network error');
-        return;
-      }
-
       const json = await res.json();
-
-      if (!json.log) {
-        console.log('Not logged in or error');
-        return;
-      }
+      if (!json.log) return;
 
       setJobid(json.jobid);
-      setStatus('pending');
-    } catch (err) {
-      console.log('Fetch/server error', err);
+      setStatus("processing");
+
+      waitForJob(json.jobid);
+    } catch {
+      setStatus("error");
     }
   }
 
-  // Poll status every 2 seconds when jobid is set
-  useEffect(() => {
-    if (!jobid) return;
+  async function waitForJob(jobid) {
+    try {
+      const res = await fetch(
+        `https://localhost:3000/wait?jobid=${jobid}`,
+        { credentials: "include" }
+      );
 
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`https://localhost:3000/status?jobid=${jobid}`, {
-          credentials: 'include',
-        });
-        if (!res.ok) {
-          console.log('Status fetch error');
-          return;
-        }
-        const json = await res.json();
-        setStatus(json.status);
-
-        if (json.status === 'done') {
-          clearInterval(interval);
-          // Build download URL (adjust if needed)
-          setDownloadUrl(`https://localhost:3000/download?jobid=${jobid}`);
-
-        } else if (json.status === 'failed') {
-          clearInterval(interval);
-          console.log('Job failed');
-        }
-      } catch (e) {
-        console.log('Status polling error', e);
+      const json = await res.json();
+      if (json.status === "done") {
+        setStatus("done");
+        setDownloadUrl(
+          `https://localhost:3000/download?jobid=${jobid}`
+        );
+      } else {
+        waitForJob(jobid);
       }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [jobid]);
+    } catch {
+      setStatus("error");
+    }
+  }
 
   return (
-    <>
-      <label>
-        Please select the PDF you want to compress
-        <input type="file" accept="application/pdf" onChange={handler} />
-      </label>
+    <div className="page">
+      <div className="card">
+        <h1>PDF → Text Converter</h1>
+        <p className="sub">
+          Upload a PDF and get extracted text using OCR
+        </p>
 
-      {status && <p>Status: {status}</p>}
+        <label className="upload-btn">
+          Upload PDF
+          <input
+            type="file"
+            accept="application/pdf"
+            onChange={handler}
+            hidden
+          />
+        </label>
 
-      {downloadUrl && (
-        <a href={downloadUrl} download={`result_${jobid}.txt`}>
-          Download Result
-        </a>
-      )}
-    </>
+        <Status status={status} />
+
+        {downloadUrl && (
+          <a className="download-btn" href={downloadUrl}>
+            Download Result
+          </a>
+        )}
+      </div>
+    </div>
   );
+}
+
+function Status({ status }) {
+  if (status === "idle") return null;
+
+  const map = {
+    uploading: "Uploading file…",
+    processing: "Processing with OCR…",
+    done: "Conversion complete 🎉",
+    error: "Something went wrong ❌",
+  };
+
+  return <p className={`status ${status}`}>{map[status]}</p>;
 }
 
 export default Pdf;

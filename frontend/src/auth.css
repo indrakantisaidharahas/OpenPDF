@@ -1,47 +1,151 @@
-.auth-container {
-  height: 100vh;
+/* Container and card */
+.home-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  background: #f4f6f8;
+  padding: 40px 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.auth-box {
+.home-card {
   background: white;
-  padding: 30px;
-  width: 320px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.auth-box h2 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.auth-box input {
+  border-radius: 12px;
+  padding: 40px 50px;
+  max-width: 900px;
   width: 100%;
-  padding: 10px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* Headings and subtitle */
+.home-card h1 {
+  font-size: 2.8rem;
   margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+  color: #333;
 }
 
-.auth-box button {
-  width: 100%;
-  padding: 10px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 5px;
+.subtitle {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 35px;
+  line-height: 1.5;
+}
+
+/* Buttons container */
+.home-actions {
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.primary-btn, .secondary-btn {
   cursor: pointer;
+  border: none;
+  font-size: 1.1rem;
+  padding: 14px 30px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+  min-width: 160px;
+  font-weight: 600;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.auth-box button:hover {
-  background: #1d4ed8;
+.primary-btn {
+  background: #4f46e5;
+  color: white;
 }
 
-.auth-box p {
-  text-align: center;
-  margin-top: 10px;
+.primary-btn:hover {
+  background: #4338ca;
+}
+
+.secondary-btn {
+  background: #e0e7ff;
+  color: #4f46e5;
+}
+
+.secondary-btn:hover {
+  background: #c7d2fe;
+}
+
+/* Plans section */
+.plans {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.plan {
+  background: #f9fafb;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+  padding: 25px 30px;
+  width: 260px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.plan h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #222;
+}
+
+.plan ul {
+  list-style: none;
+  padding-left: 0;
+  color: #555;
+  font-size: 1rem;
+}
+
+.plan ul li {
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* Premium plan special colors */
+.plan.premium {
+  background: #e0e7ff;
+  color: #312e81;
+}
+
+.plan.premium h3 {
+  color: #312e81;
+}
+
+/* Hero image */
+.hero-image {
+  max-width: 400px;
+  margin: 0 auto;
+  display: block;
+  filter: drop-shadow(0 8px 15px rgba(79,70,229,0.3));
+  border-radius: 16px;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .plans {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .plan {
+    width: 90%;
+  }
+  
+  .home-actions {
+    flex-direction: column;
+  }
+
+  .primary-btn, .secondary-btn {
+    width: 100%;
+    min-width: unset;
+  }
 }
