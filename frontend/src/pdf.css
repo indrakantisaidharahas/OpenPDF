@@ -77,3 +77,15 @@ h1 {
 .download-btn:hover {
   background: #15803d;
 }
+.pdf-log {
+  margin: 12px 0;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.pdf-log.error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}

@@ -31,5 +31,5 @@ export default function useAuth() {
     }
   }, []);
 
-  return { user, verified, checkVerification };
+  return { user, verified, checkVerification,setUser,setVerified };
 }

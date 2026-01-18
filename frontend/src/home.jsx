@@ -1,15 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useEffect,useState, useCallback  } from "react";
 import { useNavigate } from "react-router-dom";
-
 
 import useAuth from "./auth.jsx";
 import './auth.css'
+
 function Home() {
- const { user, verified, checkVerification } = useAuth();
+  const { user, verified, checkVerification, setUser, setVerified } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check verification on mount (calls /imdver)
     checkVerification().then((isVerified) => {
       if (!isVerified) {
         navigate("/login");
@@ -18,9 +17,44 @@ function Home() {
   }, [navigate, checkVerification]);
 
   if (!user || !verified) {
-    // Optional: show loading or redirecting message here
     return <p>Checking authentication...</p>;
   }
+
+  const handleLogout = async () => {
+  try {
+    const response = await fetch("https://localhost:3000/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Logout failed: ${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('Logout response:', data);
+
+    setUser(null);
+    setVerified(false);
+
+    localStorage.clear();
+    sessionStorage.clear();
+
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    }
+
+    navigate("/login");
+  } catch (err) {
+    
+    console.error(err);
+    alert(err.message || "Logout failed. Please try again.");
+
+  }
+};
+
 
   return (
     <div className="home-container">
@@ -45,6 +79,15 @@ function Home() {
             onClick={() => navigate("/jobs")}
           >
             View Jobs
+          </button>
+
+          {/* Logout button styled same as other buttons */}
+          <button
+            className="secondary-btn"  // same class as 'View Jobs' to keep size/style consistent
+            onClick={handleLogout}
+            style={{ marginLeft: "1rem" }}
+          >
+            Logout
           </button>
         </div>
 

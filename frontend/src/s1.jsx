@@ -5,12 +5,14 @@ function Pdf() {
   const [jobid, setJobid] = useState(null);
   const [status, setStatus] = useState("idle");
   const [downloadUrl, setDownloadUrl] = useState(null);
+  const [log, setLog] = useState(null);
 
   async function handler(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     setStatus("uploading");
+    setLog(null);
 
     const data = new FormData();
     data.append("file", file);
@@ -23,37 +25,72 @@ function Pdf() {
       });
 
       const json = await res.json();
-      if (!json.log) return;
+
+      if (json.log === false) {
+        setStatus("error");
+        setLog("You are not logged in.");
+        return;
+      }
+
+      if (!json.jobid) {
+        setStatus("error");
+        setLog(json.log || "Failed to create job");
+        return;
+      }
 
       setJobid(json.jobid);
       setStatus("processing");
-
       waitForJob(json.jobid);
+
     } catch {
       setStatus("error");
+      setLog("Upload failed. Please try again.");
     }
   }
 
-  async function waitForJob(jobid) {
-    try {
-      const res = await fetch(
-        `https://localhost:3000/wait?jobid=${jobid}`,
-        { credentials: "include" }
+ async function waitForJob(jobid) {
+  try {
+    const res = await fetch(
+      `https://localhost:3000/wait?jobid=${jobid}`,
+      { credentials: "include" }
+    );
+
+    const json = await res.json();
+    console.log("WAIT RESPONSE:", json); // 🔍 keep for now
+
+    // ✅ job completed
+    if (json.status === 1 && json.job_status === "done") {
+      setStatus("done");
+      setDownloadUrl(
+        `https://localhost:3000/download?jobid=${jobid}`
       );
-
-      const json = await res.json();
-      if (json.status === "done") {
-        setStatus("done");
-        setDownloadUrl(
-          `https://localhost:3000/download?jobid=${jobid}`
-        );
-      } else {
-        waitForJob(jobid);
-      }
-    } catch {
-      setStatus("error");
+      return;
     }
+
+    // ⏳ still running
+    if (json.job_status === "timeout") {
+      setTimeout(() => waitForJob(jobid), 1500);
+      return;
+    }
+
+    // ❌ job failed
+    if (json.job_status === "failed") {
+      setStatus("error");
+      setLog("Job failed during processing.");
+      return;
+    }
+
+    // ❌ unexpected response
+    setStatus("error");
+    setLog("Unexpected server response.");
+
+  } catch (err) {
+    console.error(err);
+    setStatus("error");
+    setLog("Lost connection to server.");
   }
+}
+
 
   return (
     <div className="page">
@@ -62,6 +99,8 @@ function Pdf() {
         <p className="sub">
           Upload a PDF and get extracted text using OCR
         </p>
+
+        {log && <div className="pdf-log error">{log}</div>}
 
         <label className="upload-btn">
           Upload PDF

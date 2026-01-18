@@ -4,6 +4,7 @@ import "./jobs.css";
 function Jobs() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [log, setLog] = useState(null);
 
   useEffect(() => {
     fetch("https://localhost:3000/jobs", {
@@ -11,30 +12,42 @@ function Jobs() {
     })
       .then(res => res.json())
       .then(data => {
-        setJobs(
-          data.jobids.map((id, i) => ({
-            id,
-            ...data.info[i],
-          }))
-        );
+        if (data.status === -1) {
+          setLog(data.log || "Something went wrong");
+          setLoading(false);
+          return;
+        }
+        
+        if (!data.jobs || !Array.isArray(data.jobs)) {
+          setLog("Invalid data format from server");
+          setLoading(false);
+          return;
+        }
+        
+        setJobs(data.jobs);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLog("Server unreachable. Please try again.");
+        setLoading(false);
+      });
   }, []);
 
   return (
     <div className="jobs-page">
       <h1>Your Jobs</h1>
-
       {loading && <p>Loading jobs…</p>}
-
-      {!loading && jobs.length === 0 && (
+      {log && (
+        <div className="job-log error">
+          ⚠ {log}
+        </div>
+      )}
+      {!loading && !log && jobs.length === 0 && (
         <p className="empty">No jobs yet</p>
       )}
-
       <div className="job-list">
-        {jobs.map(job => (
-          <JobCard key={job.id} job={job} />
+        {jobs.map((job, index) => (
+          <JobCard key={job.jobid || index} job={job} />
         ))}
       </div>
     </div>
@@ -42,25 +55,30 @@ function Jobs() {
 }
 
 function JobCard({ job }) {
+  const jobId = job.jobid || job._id || "unknown";
+  
   return (
-    <div className="job-card">
+    <div className={`job-card ${job.status}`}>
       <div>
         <p className="job-id">
-          Job ID: <span>{job.id.slice(0, 8)}…</span>
+          Job ID: <span>{jobId.toString().slice(0, 8)}…</span>
         </p>
-
         <p className={`job-status ${job.status}`}>
-          {job.status.toUpperCase()}
+          {job.status ? job.status.toUpperCase() : "UNKNOWN"}
         </p>
       </div>
-
-      {job.status === "done" && (
+      {job.status === "done" && job.output_path && (
         <a
           className="job-download"
-          href={`https://localhost:3000/download?jobid=${job.id}`}
+          href={`https://localhost:3000/download?jobid=${jobId}`}
         >
           Download
         </a>
+      )}
+      {job.status === "failed" && (
+        <p className="job-failed">
+          ❌ Processing failed. Try again.
+        </p>
       )}
     </div>
   );
