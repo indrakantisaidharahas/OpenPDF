@@ -73,7 +73,7 @@ console.log('Mongo connected');
 const redis = createClient({
   url: process.env.REDIS_URL
 });
-const sub = redis.duplicate();
+// const sub = redis.duplicate();
 await redis.connect();
 
 console.log('Redis connected');
