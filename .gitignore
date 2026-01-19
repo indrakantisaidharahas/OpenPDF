@@ -4,3 +4,4 @@ cert.pem
 key.pem
 /home/saidharahas/buzzdoc/backend/.env
 /home/saidharahas/buzzdoc/frontend/src/.env
+/home/saidharahas/buzzdoc/backend/node_modules

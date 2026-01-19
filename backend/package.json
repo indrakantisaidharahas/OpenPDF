@@ -2,13 +2,9 @@
   "name": "backend",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
-  "bin": {
-    "mcpserv": "./mcpserv.js"
-  },
+  "main": "backendserver.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node mcpserv"
+    "start": "node backendserver.js"
   },
   "keywords": [],
   "author": "",
