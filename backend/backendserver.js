@@ -223,8 +223,8 @@ app.post('/login', async (req, res) => {
 
   res.cookie('sid', sid, {
     httpOnly: true,
-   secure: isProd,                 
-  sameSite: isProd ? 'none' : 'lax'
+   secure: true,                 
+  sameSite:'none'
   });
  console.log('good guy login in');
   res.json({ status: 1 });
@@ -370,8 +370,8 @@ app.post('/logout', async (req, res) => {
   // Clear the cookie on client by sending expired cookie
   res.clearCookie('sid', {
     httpOnly: true,
-   secure: isProd,                
-  sameSite: isProd ? 'none' : 'lax'
+   secure: true,                
+  sameSite:'none'
   });
 
   res.json({ status: 1, message: 'Logged out successfully' });
