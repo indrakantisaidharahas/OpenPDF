@@ -1,0 +1,6 @@
+redis
+requests
+pymongo
+python-dotenv
+paddleocr
+paddlepaddle
