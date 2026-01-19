@@ -34,6 +34,7 @@ app.use(cors({
 }));
 app.use(cookieParser());
 
+
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
@@ -67,6 +68,7 @@ const users = db.collection('users');
 const jobs = db.collection('jobs');
 
 console.log('Mongo connected');
+console.log(process.env.NODE_ENV)
 
 /* ================= REDIS ================= */
 
