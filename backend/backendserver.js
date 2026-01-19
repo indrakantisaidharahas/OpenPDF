@@ -70,8 +70,13 @@ console.log('Mongo connected');
 /* ================= REDIS ================= */
 
 //const redis = createClient({ socket: {host:process.env.redis_host,port:process.env.redis_port} });
-
-const redis = createClient({ socket: {host:process.env.redis_host,port:process.env.redis_port},process.env.redis_pass });
+const redis = createClient({ 
+  password: process.env.redis_pass, 
+  socket: {
+    host: process.env.redis_host,
+    port: process.env.redis_port
+  } 
+});
 await redis.connect();
 
 console.log('Redis connected');
