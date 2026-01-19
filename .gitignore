@@ -2,3 +2,5 @@ venv
 .env
 cert.pem
 key.pem
+/home/saidharahas/buzzdoc/backend/.env
+/home/saidharahas/buzzdoc/frontend/src/.env

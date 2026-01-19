@@ -5,7 +5,7 @@ import "./auth.css";
 export default function Login() {
   const [mail, setMail] = useState("");
   const [pass, setPass] = useState("");
-  const [log, setLog] = useState(null);     // 👈 NEW
+  const [log, setLog] = useState(null);    
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -15,7 +15,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://localhost:3000/login", {
+      const res = await fetch(import.meta.env.VITE_LOGIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -25,6 +25,7 @@ export default function Login() {
       const data = await res.json();
 
       if (data.status ==1) {
+        
         navigate("/");
       } else {
         setLog(data.log || "Invalid email or password");

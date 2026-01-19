@@ -6,7 +6,7 @@ export default function useAuth() {
 
   const checkVerification = useCallback(async () => {
     try {
-      const res = await fetch("https://localhost:3000/imdver", {
+      const res = await fetch(import.meta.env.VITE_IMD_VER, {
         credentials: "include",
       });
       if (!res.ok) {

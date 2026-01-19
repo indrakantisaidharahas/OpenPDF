@@ -11,23 +11,36 @@ import path from 'path';
 import { MongoClient } from 'mongodb';
 import validator from 'validator';
 import {ObjectId } from 'mongodb';
+import dotenv from 'dotenv';
+import { rateLimit } from 'express-rate-limit';
+//import router from "./server.js";
 
 
 /* ================= CONFIG ================= */
+dotenv.config()
 
-const BASE_DIR = '/home/saidharahas/buzzdoc/backend';
+const BASE_DIR = process.cwd();
 const UPLOAD_DIR = path.join(BASE_DIR, 'uploads');
-const PORT = 3000;
-
+const PORT = process.env.PORT || 3000;
+const isProd = process.env.NODE_ENV === 'production';
 /* ================= APP ================= */
 
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: 'https://localhost:5173',
+  origin: process.env.frontend,
   credentials: true
 }));
 app.use(cookieParser());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again after 15 minutes'
+});
+
+app.use(limiter);
+
 
 /* ================= HELPERS ================= */
 
@@ -42,9 +55,10 @@ function logError(code, message) {
   };
 }
 
+
 /* ================= MONGO ================= */
 
-const mongo = new MongoClient('mongodb://localhost:27017');
+const mongo = new MongoClient(process.env.mongodb);
 await mongo.connect();
 
 const db = mongo.db('openpdf');
@@ -55,7 +69,9 @@ console.log('Mongo connected');
 
 /* ================= REDIS ================= */
 
-const redis = createClient({ socket: { host: '127.0.0.1', port: 6379 } });
+const redis = createClient({ socket: {host:process.env.redis_host,port:process.env.redis_port} });
+
+//const redis = createClient({ socket: {host:process.env.redis_host,port:process.env.redis_port},process.env.redis_pass });
 await redis.connect();
 
 console.log('Redis connected');
@@ -173,8 +189,8 @@ app.post('/signin', async (req, res) => {
   console.log("new user signed in");
   res.cookie('sid', sid, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'strict'
+    secure: isProd,                 // ❌ false locally
+  sameSite: isProd ? 'none' : 'lax'
   });
 
   res.json({ status: 1 });
@@ -202,8 +218,8 @@ app.post('/login', async (req, res) => {
 
   res.cookie('sid', sid, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'strict'
+   secure: isProd,                 
+  sameSite: isProd ? 'none' : 'lax'
   });
  console.log('good guy login in');
   res.json({ status: 1 });
@@ -349,8 +365,8 @@ app.post('/logout', async (req, res) => {
   // Clear the cookie on client by sending expired cookie
   res.clearCookie('sid', {
     httpOnly: true,
-    secure: true,
-    sameSite: 'strict'
+   secure: isProd,                
+  sameSite: isProd ? 'none' : 'lax'
   });
 
   res.json({ status: 1, message: 'Logged out successfully' });
@@ -427,11 +443,55 @@ await sub.pSubscribe('job_done:*', async (message, channel) => {
   }
 });
 
-/* ================= HTTPS ================= */
 
-https.createServer({
-  key: fs.readFileSync('/home/saidharahas/buzzdoc/key.pem'),
-  cert: fs.readFileSync('/home/saidharahas/buzzdoc/cert.pem')
-}, app).listen(PORT, () =>
-  console.log(`🚀 https://localhost:${PORT}`)
-);
+/*receiving file from worker */
+app.post("/worker/result", async (req, res) => {
+  try {
+    const { jobid, text } = req.body;
+    if (!jobid || !text) {
+      return res.status(400).json({ ok: false });
+    }
+
+   // const outDir = process.env.UPLOAD_DIR|| path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+    const outPath = path.join(UPLOAD_DIR, `${jobid}.txt`);
+    fs.writeFileSync(outPath, text);
+
+    // update redis
+    await redis.hSet(`job:${jobid}`, {
+      status: "done",
+      output_path: outPath
+    });
+
+    // update mongo
+    await jobs.updateOne(
+      { jobid },
+      {
+        $set: {
+          status: "done",
+          output_path: outPath,
+          updated_at: new Date()
+        }
+      }
+    );
+
+    const userid = await redis.hGet(`job:${jobid}`, "userid");
+    await redis.publish(`job_done:${userid}`, jobid);
+
+    res.json({ ok: true });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false });
+  }
+});
+
+
+
+
+
+
+/* ================= HTTPS ================= */
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});

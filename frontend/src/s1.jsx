@@ -18,7 +18,7 @@ function Pdf() {
     data.append("file", file);
 
     try {
-      const res = await fetch("https://localhost:3000/context", {
+      const res = await fetch(import.meta.env.VITE_CONTEXT, {
         method: "POST",
         credentials: "include",
         body: data,
@@ -51,18 +51,18 @@ function Pdf() {
  async function waitForJob(jobid) {
   try {
     const res = await fetch(
-      `https://localhost:3000/wait?jobid=${jobid}`,
+      `${import.meta.env.VITE_DEST}/wait?jobid=${jobid}`,
       { credentials: "include" }
     );
 
     const json = await res.json();
     console.log("WAIT RESPONSE:", json); // 🔍 keep for now
 
-    // ✅ job completed
+   
     if (json.status === 1 && json.job_status === "done") {
       setStatus("done");
       setDownloadUrl(
-        `https://localhost:3000/download?jobid=${jobid}`
+        `${import.meta.env.VITE_DEST}/download?jobid=${jobid}`
       );
       return;
     }
@@ -73,14 +73,14 @@ function Pdf() {
       return;
     }
 
-    // ❌ job failed
+    
     if (json.job_status === "failed") {
       setStatus("error");
       setLog("Job failed during processing.");
       return;
     }
 
-    // ❌ unexpected response
+   
     setStatus("error");
     setLog("Unexpected server response.");
 
@@ -130,8 +130,8 @@ function Status({ status }) {
   const map = {
     uploading: "Uploading file…",
     processing: "Processing with OCR…",
-    done: "Conversion complete 🎉",
-    error: "Something went wrong ❌",
+    done: "Conversion complete ",
+    error: "Something went wrong ",
   };
 
   return <p className={`status ${status}`}>{map[status]}</p>;

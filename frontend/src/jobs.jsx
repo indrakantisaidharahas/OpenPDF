@@ -7,7 +7,7 @@ function Jobs() {
   const [log, setLog] = useState(null);
 
   useEffect(() => {
-    fetch("https://localhost:3000/jobs", {
+    fetch(import.meta.env.VITE_JOBS, {
       credentials: "include",
     })
       .then(res => res.json())
@@ -70,7 +70,7 @@ function JobCard({ job }) {
       {job.status === "done" && job.output_path && (
         <a
           className="job-download"
-          href={`https://localhost:3000/download?jobid=${jobId}`}
+          href={`${import.meta.env.VITE_DEST}/download?jobid=${jobId}`}
         >
           Download
         </a>

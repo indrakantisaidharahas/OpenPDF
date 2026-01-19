@@ -11,6 +11,7 @@ function Home() {
   useEffect(() => {
     checkVerification().then((isVerified) => {
       if (!isVerified) {
+        console.log("not verified");
         navigate("/login");
       }
     });
@@ -22,7 +23,7 @@ function Home() {
 
   const handleLogout = async () => {
   try {
-    const response = await fetch("https://localhost:3000/logout", {
+    const response = await fetch(import.meta.env.VITE_LOGOUT, {
       method: "POST",
       credentials: "include",
     });

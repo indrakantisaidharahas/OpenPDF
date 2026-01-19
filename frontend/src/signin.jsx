@@ -16,7 +16,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://localhost:3000/signin", {
+      const res = await fetch(import.meta.env.VITE_SIGNIN, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
