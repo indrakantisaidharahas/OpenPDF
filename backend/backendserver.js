@@ -344,6 +344,7 @@ app.get('/download', async (req, res) => {
   console.log('Download request for jobid:', req.query.jobid);
 
   const uid = await checkSession(req.cookies.sid);
+  console.log('Session user id:', uid);
   if (!uid) {
     return res.status(401).send('Login required');
   }
