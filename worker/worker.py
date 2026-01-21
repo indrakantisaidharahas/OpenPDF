@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pymongo import MongoClient
 from pdf2image import convert_from_path
 import easyocr
+import numpy as np
 
 print("BOOTING WORKER")
 
@@ -39,13 +40,15 @@ def run_ocr(url):
         all_text = []
 
         for img in images:
-            result = reader.readtext(img, detail=0)
+            img_np = np.array(img)          # ⭐ ONLY IMPORTANT FIX
+            result = reader.readtext(img_np, detail=0)
             all_text.extend(result)
 
         return "\n".join(all_text)
 
     finally:
         os.unlink(pdf_path)
+
 
 print("OCR Worker started")
 
