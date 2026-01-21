@@ -11,6 +11,8 @@ from pymongo import MongoClient
 os.environ['FLAGS_use_onednn'] = '0'
 os.environ['ONEDNN_ENABLE'] = '0'
 os.environ['FLAGS_use_mkldnn'] = '0'
+os.environ['FLAGS_use_cinn'] = '0'
+os.environ['FLAGS_use_xpu'] = '0'
 
 print("BOOTING WORKER")
 REDIS_URL = os.environ["REDIS_URL"]
@@ -42,7 +44,7 @@ def run_ocr(url):
     
     try:
         # Process the downloaded file
-        result = ocr.ocr(temp_path)
+        result = ocr.predict(temp_path)
         text = []
         for page in result:
             for line in page.get("rec_texts", []):
