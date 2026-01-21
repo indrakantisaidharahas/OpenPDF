@@ -6,3 +6,4 @@ torchvision==0.16.0+cpu
 redis
 pymongo
 requests
+pdf2image
