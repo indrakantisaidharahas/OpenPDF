@@ -6,21 +6,24 @@ from datetime import datetime, timezone
 from paddleocr import PaddleOCR
 from pymongo import MongoClient
 
+# Environment variables (must be set in Railway Variables)
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
 NODE_URL  = os.environ["NODE_URL"]
 
+# Connections
 r = redis.from_url(REDIS_URL, decode_responses=True)
 mongo = MongoClient(MONGO_URI)
 db = mongo["openpdf"]
 jobs_col = db["jobs"]
 
+# Lazy OCR initialization
 ocr = None
 
 def run_ocr(path):
     global ocr
     if ocr is None:
-        print("🔄 Initializing PaddleOCR...")
+        print("Initializing PaddleOCR...")
         ocr = PaddleOCR(lang="en")
     result = ocr.predict(path)
     text = []
@@ -29,16 +32,16 @@ def run_ocr(path):
             text.append(line)
     return "\n".join(text)
 
-print("✅ OCR Worker started")
+print("OCR Worker started")
 
 while True:
     try:
-        res = r.brpop("job_queue", timeout=30)
-        if res is None:
+        item = r.brpop("job_queue", timeout=30)
+        if item is None:
             continue
 
-        _, jobid = res
-        print("➡ Processing", jobid)
+        _, jobid = item
+        print("Processing job:", jobid)
 
         r.hset(f"job:{jobid}", "status", "processing")
         jobs_col.update_one(
@@ -49,16 +52,22 @@ while True:
         input_path = r.hget(f"job:{jobid}", "path")
         text = run_ocr(input_path)
 
-        res = requests.post(
+        response = requests.post(
             f"{NODE_URL}/worker/result",
             json={"jobid": jobid, "text": text},
             timeout=60
         )
 
-        if res.status_code != 200:
-            raise Exception("Failed to send result to Node")
+        if response.status_code != 200:
+            raise Exception("Failed to send result to Node service")
 
-        print("✅ Job completed", jobid)
+        print("Job completed:", jobid)
 
     except Exception:
         traceback.print_exc()
+        if "jobid" in locals():
+            r.hset(f"job:{jobid}", "status", "failed")
+            jobs_col.update_one(
+                {"jobid": jobid},
+                {"$set": {"status": "failed", "updated_at": datetime.now(timezone.utc)}}
+            )
