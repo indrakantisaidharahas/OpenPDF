@@ -199,7 +199,8 @@ app.post('/signin', async (req, res) => {
   res.cookie('sid', sid, {
     httpOnly: true,
     secure: true,                 // ❌ false locally
-  sameSite:'none'
+  sameSite:'none',
+  path:'/'
   });
 
   res.json({ status: 1 });
@@ -229,6 +230,7 @@ app.post('/login', async (req, res) => {
     httpOnly: true,
    secure: true,                 
   sameSite:'none',
+  path:'/'
   });
  console.log('good guy login in');
   res.json({ status: 1 });
@@ -376,7 +378,8 @@ app.post('/logout', async (req, res) => {
   res.clearCookie('sid', {
     httpOnly: true,
    secure: true,                
-  sameSite:'none'
+  sameSite:'none',
+  path:'/'
   });
 
   res.json({ status: 1, message: 'Logged out successfully' });
