@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD [".venv/bin/python", "worker.py"]
+CMD ["python", "worker.py"]
