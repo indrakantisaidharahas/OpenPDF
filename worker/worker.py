@@ -7,6 +7,11 @@ from datetime import datetime, timezone
 from paddleocr import PaddleOCR
 from pymongo import MongoClient
 
+# DISABLE OneDNN before any imports
+os.environ['FLAGS_use_onednn'] = '0'
+os.environ['ONEDNN_ENABLE'] = '0'
+os.environ['FLAGS_use_mkldnn'] = '0'
+
 print("BOOTING WORKER")
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
