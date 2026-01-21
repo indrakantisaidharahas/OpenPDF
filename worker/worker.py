@@ -4,55 +4,48 @@ import requests
 import traceback
 import tempfile
 from datetime import datetime, timezone
-from paddleocr import PaddleOCR
 from pymongo import MongoClient
-
-# DISABLE OneDNN before any imports
-os.environ['FLAGS_use_onednn'] = '0'
-os.environ['ONEDNN_ENABLE'] = '0'
-os.environ['FLAGS_use_mkldnn'] = '0'
-os.environ['FLAGS_use_cinn'] = '0'
-os.environ['FLAGS_use_xpu'] = '0'
+from pdf2image import convert_from_path
+import easyocr
 
 print("BOOTING WORKER")
+
+# Environment variables
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
 NODE_URL = os.environ["NODE_URL"]
 
+# Connections
 r = redis.from_url(REDIS_URL, decode_responses=True)
 mongo = MongoClient(MONGO_URI)
 db = mongo["openpdf"]
 jobs_col = db["jobs"]
 
-ocr = None
-if ocr is None:
-    print("Initializing PaddleOCR...")
-    ocr = PaddleOCR(lang="en")
+# Initialize EasyOCR (CPU safe)
+print("Initializing EasyOCR...")
+reader = easyocr.Reader(['en'], gpu=False)
 
 def run_ocr(url):
-    global ocr
-    
-    # Download file from URL
     print(f"Downloading file from: {url}")
     response = requests.get(url)
-    response.raise_for_status()  # Raise error if download fails
-    
-    # Save to temp file
-    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
+    response.raise_for_status()
+
+    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
         f.write(response.content)
-        temp_path = f.name
-    
+        pdf_path = f.name
+
     try:
-        # Process the downloaded file
-        result = ocr.predict(temp_path)
-        text = []
-        for page in result:
-            for line in page.get("rec_texts", []):
-                text.append(line)
-        return "\n".join(text)
+        images = convert_from_path(pdf_path)
+        all_text = []
+
+        for img in images:
+            result = reader.readtext(img, detail=0)
+            all_text.extend(result)
+
+        return "\n".join(all_text)
+
     finally:
-        # Clean up temp file
-        os.unlink(temp_path)
+        os.unlink(pdf_path)
 
 print("OCR Worker started")
 
@@ -71,10 +64,9 @@ while True:
             {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc)}}
         )
 
-        # Get the URL from Redis
         file_url = r.hget(f"job:{jobid}", "path")
-        print(f"File URL: {file_url}")
-        
+        print("File URL:", file_url)
+
         text = run_ocr(file_url)
 
         response = requests.post(

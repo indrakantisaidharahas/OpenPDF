@@ -1,7 +1,8 @@
-redis
-requests
-pymongo
-python-dotenv
-paddleocr
-paddlepaddle
+easyocr
+torch
 opencv-python-headless
+pillow
+pdf2image
+redis
+pymongo
+requests
