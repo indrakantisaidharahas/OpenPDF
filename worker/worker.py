@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from paddleocr import PaddleOCR
 from pymongo import MongoClient
 
+print("BOOTING WORKER")
 # Environment variables (must be set in Railway Variables)
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
