@@ -126,10 +126,14 @@ async function createJob(userid, pdfPath) {
     return { jobid: existing, exist: true };
   }
 
+  // Store URL instead of local path
+  const filename = path.basename(pdfPath);
+  const fileUrl = `${process.env.NODE_URL}/worker-file/${filename}`;
+  
   await redis.hSet(`job:${jobid}`, {
     userid,
     status: 'pending',
-    path: pdfPath,
+    path: fileUrl,  // <-- Store URL instead of local path
     output_path: ''
   });
 
@@ -145,7 +149,7 @@ async function createJob(userid, pdfPath) {
     jobid,
     userid,
     status: 'pending',
-    input_path: pdfPath,
+    input_path: pdfPath,  // Keep original path for Node.js
     output_path: null,
     file_hash: hash,
     created_at: now,
@@ -489,6 +493,16 @@ app.post("/worker/result", async (req, res) => {
     console.error(e);
     res.status(500).json({ ok: false });
   }
+});
+/* ---- SERVE FILES TO WORKER (ADD THIS) ---- */
+app.get('/worker-file/:filename', (req, res) => {
+  const filePath = path.join(UPLOAD_DIR, req.params.filename);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'File not found' });
+  }
+  
+  res.sendFile(filePath);
 });
 
 

@@ -7,22 +7,19 @@ from paddleocr import PaddleOCR
 from pymongo import MongoClient
 
 print("BOOTING WORKER")
-# Environment variables (must be set in Railway Variables)
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
-NODE_URL  = os.environ["NODE_URL"]
+NODE_URL = os.environ["NODE_URL"]
 
-# Connections
 r = redis.from_url(REDIS_URL, decode_responses=True)
 mongo = MongoClient(MONGO_URI)
 db = mongo["openpdf"]
 jobs_col = db["jobs"]
 
-# Lazy OCR initialization
 ocr = None
 if ocr is None:
-        print("Initializing PaddleOCR...")
-        ocr = PaddleOCR(lang="en")
+    print("Initializing PaddleOCR...")
+    ocr = PaddleOCR(lang="en")
 
 def run_ocr(path):
     global ocr
