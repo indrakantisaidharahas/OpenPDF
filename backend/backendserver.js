@@ -198,8 +198,8 @@ app.post('/signin', async (req, res) => {
   console.log("new user signed in");
   res.cookie('sid', sid, {
     httpOnly: true,
-    secure: isProd,                 // ❌ false locally
-  sameSite: isProd ? 'none' : 'lax'
+    secure: true,                 // ❌ false locally
+  sameSite:'none'
   });
 
   res.json({ status: 1 });
@@ -228,7 +228,7 @@ app.post('/login', async (req, res) => {
   res.cookie('sid', sid, {
     httpOnly: true,
    secure: true,                 
-  sameSite:'none'
+  sameSite:'none',
   });
  console.log('good guy login in');
   res.json({ status: 1 });
