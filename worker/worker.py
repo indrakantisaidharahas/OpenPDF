@@ -42,7 +42,7 @@ def run_ocr(url):
     
     try:
         # Process the downloaded file
-        result = ocr.predict(temp_path)
+        result = ocr.ocr(temp_path)
         text = []
         for page in result:
             for line in page.get("rec_texts", []):
