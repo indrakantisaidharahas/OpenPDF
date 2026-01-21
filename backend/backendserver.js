@@ -342,7 +342,7 @@ app.get('/jobs', async (req, res) => {
 /* ---- DOWNLOAD ---- */
 app.get('/download', async (req, res) => {
   console.log('Download request for jobid:', req.query.jobid);
-
+     console.log('Cookies received:', req.cookies);
   const uid = await checkSession(req.cookies.sid);
   console.log('Session user id:', uid);
   if (!uid) {
