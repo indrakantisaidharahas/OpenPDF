@@ -36,7 +36,7 @@ def run_ocr(url):
         pdf_path = f.name
 
     try:
-        images = convert_from_path(pdf_path)
+        images = convert_from_path(pdf_path, dpi=50)
         all_text = []
 
         for img in images:
