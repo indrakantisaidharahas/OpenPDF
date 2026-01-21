@@ -2,6 +2,7 @@ import os
 import redis
 import requests
 import traceback
+import tempfile
 from datetime import datetime, timezone
 from paddleocr import PaddleOCR
 from pymongo import MongoClient
@@ -21,14 +22,30 @@ if ocr is None:
     print("Initializing PaddleOCR...")
     ocr = PaddleOCR(lang="en")
 
-def run_ocr(path):
+def run_ocr(url):
     global ocr
-    result = ocr.predict(path)
-    text = []
-    for page in result:
-        for line in page.get("rec_texts", []):
-            text.append(line)
-    return "\n".join(text)
+    
+    # Download file from URL
+    print(f"Downloading file from: {url}")
+    response = requests.get(url)
+    response.raise_for_status()  # Raise error if download fails
+    
+    # Save to temp file
+    with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as f:
+        f.write(response.content)
+        temp_path = f.name
+    
+    try:
+        # Process the downloaded file
+        result = ocr.predict(temp_path)
+        text = []
+        for page in result:
+            for line in page.get("rec_texts", []):
+                text.append(line)
+        return "\n".join(text)
+    finally:
+        # Clean up temp file
+        os.unlink(temp_path)
 
 print("OCR Worker started")
 
@@ -47,8 +64,11 @@ while True:
             {"$set": {"status": "processing", "updated_at": datetime.now(timezone.utc)}}
         )
 
-        input_path = r.hget(f"job:{jobid}", "path")
-        text = run_ocr(input_path)
+        # Get the URL from Redis
+        file_url = r.hget(f"job:{jobid}", "path")
+        print(f"File URL: {file_url}")
+        
+        text = run_ocr(file_url)
 
         response = requests.post(
             f"{NODE_URL}/worker/result",
