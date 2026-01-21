@@ -3,11 +3,11 @@ import redis
 import requests
 import traceback
 from datetime import datetime, timezone
+from paddleocr import PaddleOCR
 from pymongo import MongoClient
 
-print("BOOTING WORKER", flush=True)
-
-# Environment variables
+print("BOOTING WORKER")
+# Environment variables (must be set in Railway Variables)
 REDIS_URL = os.environ["REDIS_URL"]
 MONGO_URI = os.environ["MONGO_URI"]
 NODE_URL  = os.environ["NODE_URL"]
@@ -20,14 +20,12 @@ jobs_col = db["jobs"]
 
 # Lazy OCR initialization
 ocr = None
+if ocr is None:
+        print("Initializing PaddleOCR...")
+        ocr = PaddleOCR(lang="en")
 
 def run_ocr(path):
     global ocr
-    if ocr is None:
-        print("Initializing PaddleOCR...", flush=True)
-        from paddleocr import PaddleOCR   # ✅ lazy import
-        ocr = PaddleOCR(lang="en", use_angle_cls=False)
-
     result = ocr.predict(path)
     text = []
     for page in result:
@@ -35,16 +33,16 @@ def run_ocr(path):
             text.append(line)
     return "\n".join(text)
 
-print("OCR Worker started", flush=True)
+print("OCR Worker started")
 
 while True:
     try:
         item = r.brpop("job_queue", timeout=30)
-        if not item:
+        if item is None:
             continue
 
         _, jobid = item
-        print("Processing job:", jobid, flush=True)
+        print("Processing job:", jobid)
 
         r.hset(f"job:{jobid}", "status", "processing")
         jobs_col.update_one(
@@ -53,9 +51,6 @@ while True:
         )
 
         input_path = r.hget(f"job:{jobid}", "path")
-        if not input_path:
-            raise Exception("Input path missing")
-
         text = run_ocr(input_path)
 
         response = requests.post(
@@ -67,7 +62,7 @@ while True:
         if response.status_code != 200:
             raise Exception("Failed to send result to Node service")
 
-        print("Job completed:", jobid, flush=True)
+        print("Job completed:", jobid)
 
     except Exception:
         traceback.print_exc()
