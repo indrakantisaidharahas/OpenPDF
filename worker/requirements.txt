@@ -1,10 +1,12 @@
-easyocr
-opencv-python-headless
+numpy
+
 torch==2.1.0+cpu
 torchvision==0.16.0+cpu
 --extra-index-url https://download.pytorch.org/whl/cpu
+
+easyocr
+opencv-python-headless
+pdf2image
 redis
 pymongo
 requests
-pdf2image
-numpy
