@@ -2,7 +2,6 @@ import os
 import redis
 import requests
 import traceback
-import redis
 from datetime import datetime
 from paddleocr import PaddleOCR
 from pymongo import MongoClient
