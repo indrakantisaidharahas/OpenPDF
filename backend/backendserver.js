@@ -360,10 +360,11 @@ app.get('/download', async (req, res) => {
   const job = await jobs.findOne({ jobid: jobid, userid: uid });
 
   console.log('Found job:', job);
-
+  
   if (!job || !job.output_path) {
     return res.status(404).send('Output file not ready');
   }
+  res.setHeader("Content-Type", "text/plain");
 
   res.download(job.output_path);
 });
@@ -488,6 +489,7 @@ app.post("/worker/result", async (req, res) => {
         }
       }
     );
+
 
     const userid = await redis.hGet(`job:${jobid}`, "userid");
     await redis.publish(`job_done:${userid}`, jobid);

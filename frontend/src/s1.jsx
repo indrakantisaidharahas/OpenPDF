@@ -47,6 +47,39 @@ function Pdf() {
       setLog("Upload failed. Please try again.");
     }
   }
+  async function handleDownload() {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_DEST}/download?jobid=${jobid}`,
+      {
+        credentials: "include",
+      }
+    );
+
+    if (!res.ok) {
+      setLog("Download failed");
+      return;
+    }
+
+    const text = await res.text(); // ⬅️ TXT, not blob
+
+    const blob = new Blob([text], { type: "text/plain" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${jobid}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(err);
+    setLog("Download error");
+  }
+}
+
 
  async function waitForJob(jobid) {
   try {
@@ -114,11 +147,11 @@ function Pdf() {
 
         <Status status={status} />
 
-        {downloadUrl && (
-          <a className="download-btn" href={downloadUrl}>
-            Download Result
-          </a>
-        )}
+        {status === "done" && (
+  <button className="download-btn" onClick={handleDownload}>
+    Download Result
+  </button>
+)}
       </div>
     </div>
   );
